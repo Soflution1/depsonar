@@ -111,3 +111,19 @@ export const LicensesSchema = {
   project: z.string().optional().describe("Check a specific project. Leave empty to check all."),
   directory: z.string().optional().describe("Root directory to scan."),
 };
+
+// ─── v4 Schemas ────────────────────────────────────────────────────────
+
+export const LiveCveSchema = {
+  project: z.string().optional().describe("Scan a specific project. Leave empty to scan all."),
+  directory: z.string().optional().describe("Root directory to scan."),
+};
+
+export const ChangelogSchema = {
+  project: z.string().describe("Project name or path to check changelogs for."),
+};
+
+export const MigrateSchema = {
+  project: z.string().optional().describe("Check a specific project. Leave empty to check all."),
+  directory: z.string().optional().describe("Root directory to scan."),
+};

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * depup-checker: Lightweight background scanner
+ * depradar-checker: Lightweight background scanner
  *
  * Runs via cron/launchd, scans all projects for outdated deps,
- * writes results to ~/.depup-cache.json, and exits.
+ * writes results to ~/.depradar-cache.json, and exits.
  *
  * - Zero RAM between runs (process exits)
  * - Zero tokens (no AI API calls)
@@ -30,7 +30,7 @@ export async function main() {
   const projects = discoverProjects();
 
   if (projects.length === 0) {
-    console.error("[DepRadar] No projects found. Configure with ~/.depuprc.json");
+    console.error("[DepRadar] No projects found. Configure with ~/.depradarrc.json");
     process.exit(0);
   }
 
@@ -125,7 +125,7 @@ export async function main() {
   console.error(
     `[DepRadar] Done in ${elapsed}s. ${entries.length} projects, ${alerts} need attention.`
   );
-  console.error(`[DepRadar] Cache written to ~/.depup-cache.json`);
+  console.error(`[DepRadar] Cache written to ~/.depradar-cache.json`);
 }
 
 // Only run if called directly (not imported)

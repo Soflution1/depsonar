@@ -1,11 +1,15 @@
 {
   "name": "DepRadar",
-  "version": "3.0.0",
-  "description": "MCP server for complete dev infrastructure maintenance. Dependencies, CVEs, secrets, licenses, runtimes, Docker, GitHub Actions. 20 tools, 9 languages.",
+  "version": "4.0.0",
+  "description": "MCP server for dependency auditing, live CVE scanning, migration detection & full stack health. 23 tools, 9 languages.",
   "keywords": [
     "mcp",
     "dependencies",
     "update",
+    "audit",
+    "cve",
+    "security",
+    "migration",
     "svelte",
     "sveltekit",
     "nextjs",

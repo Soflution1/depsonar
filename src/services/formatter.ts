@@ -86,7 +86,7 @@ export function formatScanSummary(
 
   const footer: string[] = [];
   if (totalOutdated > 0) {
-    footer.push(`\n> Use \`depup_check\` for details, or \`depup_update_all\` to update everything.`);
+    footer.push(`\n> Use \`depradar_check\` for details, or \`depradar_update_all\` to update everything.`);
   }
 
   return truncate([...header, ...rows, ...footer].join("\n"));
@@ -201,7 +201,7 @@ export function formatCacheAlerts(cache: CacheFile): string {
     lines.push(`| ${p.project} | ${langName} | ${p.outdatedCount} | ${p.majorCount} | ${scoreEmoji} ${p.score} |`);
   }
 
-  lines.push("", "> Use `depup_check` for details or `depup_update_all` to update.");
+  lines.push("", "> Use `depradar_check` for details or `depradar_update_all` to update.");
 
   return lines.join("\n");
 }
@@ -425,7 +425,7 @@ export function formatCve(results: CveCheckResult[], dbStats?: { total: number; 
     lines.push("");
   }
 
-  lines.push("> Fix: `depup_update` with the specific packages listed above.");
+  lines.push("> Fix: `depradar_update` with the specific packages listed above.");
 
   return truncate(lines.join("\n"));
 }
@@ -586,7 +586,7 @@ export function formatAudit(results: AuditResult[]): string {
     }
   }
 
-  lines.push("", "> Fix vulnerabilities: `depup_update` with `level: patch` for security-only fixes.");
+  lines.push("", "> Fix vulnerabilities: `depradar_update` with `level: patch` for security-only fixes.");
 
   return truncate(lines.join("\n"));
 }
@@ -623,6 +623,133 @@ export function formatInfraReport(sections: {
   if (sections.deprecated) { lines.push("", sections.deprecated, "\n---"); }
   if (sections.licenses) { lines.push("", sections.licenses, "\n---"); }
   if (sections.deps) { lines.push("", sections.deps); }
+
+  return truncate(lines.join("\n"));
+}
+
+// ─── v4 Formatters ─────────────────────────────────────────────────────
+
+export function formatLiveCve(results: Array<{
+  project: string;
+  vulnerabilities: Array<{
+    id: string; summary: string; severity: string;
+    package: string; fixedVersion: string | null; url: string;
+  }>;
+  packagesQueried: number;
+}>): string {
+  if (results.length === 0) {
+    return "# 🛡️ Live CVE Scan (osv.dev)\n\n✅ No known vulnerabilities found in any project.";
+  }
+
+  const lines = ["# 🛡️ Live CVE Scan (osv.dev)\n"];
+  let totalVulns = 0;
+
+  for (const result of results) {
+    lines.push(`## ${result.project} (${result.packagesQueried} packages scanned)\n`);
+    for (const vuln of result.vulnerabilities) {
+      totalVulns++;
+      const emoji = vuln.severity === "critical" ? "🔴" : vuln.severity === "high" ? "🟠" : "🟡";
+      lines.push(`- ${emoji} **${vuln.id}** \`${vuln.package}\` (${vuln.severity})`);
+      lines.push(`  ${vuln.summary}`);
+      if (vuln.fixedVersion) lines.push(`  Fix: upgrade to \`${vuln.fixedVersion}\``);
+      lines.push(`  ${vuln.url}`);
+    }
+    lines.push("");
+  }
+
+  lines.unshift(`Found **${totalVulns}** vulnerabilities across ${results.length} project(s).\n`);
+  return truncate(lines.join("\n"));
+}
+
+export function formatChangelog(result: {
+  project: string;
+  entries: Array<{
+    package: string; currentVersion: string; latestVersion: string;
+    hasBreakingChanges: boolean; changelogUrl: string | null;
+    releaseNotes: string | null; updateType: string;
+  }>;
+}): string {
+  if (result.entries.length === 0) {
+    return `# 📋 Changelog: ${result.project}\n\n✅ All dependencies are up to date.`;
+  }
+
+  const lines = [`# 📋 Changelog: ${result.project}\n`];
+  const majors = result.entries.filter(e => e.updateType === "major");
+  const minors = result.entries.filter(e => e.updateType === "minor");
+  const patches = result.entries.filter(e => e.updateType === "patch");
+
+  if (majors.length > 0) {
+    lines.push(`## ⚠️ Major Updates (${majors.length}) — Breaking Changes\n`);
+    for (const e of majors) {
+      lines.push(`- **${e.package}** \`${e.currentVersion}\` → \`${e.latestVersion}\``);
+      if (e.releaseNotes) lines.push(`  ${e.releaseNotes}`);
+      if (e.changelogUrl) lines.push(`  📄 ${e.changelogUrl}`);
+    }
+    lines.push("");
+  }
+
+  if (minors.length > 0) {
+    lines.push(`## 🔄 Minor Updates (${minors.length})\n`);
+    for (const e of minors) {
+      lines.push(`- **${e.package}** \`${e.currentVersion}\` → \`${e.latestVersion}\``);
+    }
+    lines.push("");
+  }
+
+  if (patches.length > 0) {
+    lines.push(`## 🩹 Patches (${patches.length})\n`);
+    for (const e of patches) {
+      lines.push(`- ${e.package} \`${e.currentVersion}\` → \`${e.latestVersion}\``);
+    }
+  }
+
+  return truncate(lines.join("\n"));
+}
+
+export function formatMigration(results: Array<{
+  project: string; framework: string;
+  currentVersion: string; latestMajor: string | null;
+  issues: Array<{ type: string; file: string; line: number; message: string; migration: string }>;
+  migrationGuideUrl: string | null;
+}>): string {
+  if (results.length === 0) {
+    return "# 🔄 Migration Check\n\n✅ No framework migrations needed.";
+  }
+
+  const lines = ["# 🔄 Migration Check\n"];
+
+  for (const result of results) {
+    lines.push(`## ${result.project} — ${result.framework} ${result.currentVersion} → ${result.latestMajor}\n`);
+    if (result.migrationGuideUrl) lines.push(`📖 Guide: ${result.migrationGuideUrl}\n`);
+
+    const breaking = result.issues.filter(i => i.type === "breaking");
+    const deprecated = result.issues.filter(i => i.type === "deprecated");
+
+    if (breaking.length > 0) {
+      lines.push(`### ⚠️ Breaking Changes (${breaking.length} occurrences)\n`);
+      const grouped = new Map<string, typeof breaking>();
+      for (const issue of breaking) {
+        const existing = grouped.get(issue.message) || [];
+        existing.push(issue);
+        grouped.set(issue.message, existing);
+      }
+      for (const [message, issues] of grouped) {
+        lines.push(`- **${message}**`);
+        lines.push(`  → ${issues[0].migration}`);
+        lines.push(`  Found in: ${issues.slice(0, 5).map(i => `\`${i.file}:${i.line}\``).join(", ")}${issues.length > 5 ? ` (+${issues.length - 5} more)` : ""}`);
+      }
+      lines.push("");
+    }
+
+    if (deprecated.length > 0) {
+      lines.push(`### 🟡 Deprecated (${deprecated.length})\n`);
+      for (const issue of deprecated) {
+        lines.push(`- ${issue.message} in \`${issue.file}:${issue.line}\``);
+        lines.push(`  → ${issue.migration}`);
+      }
+    }
+    lines.push("");
+  }
 
   return truncate(lines.join("\n"));
 }

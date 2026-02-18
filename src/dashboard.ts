@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * depup dashboard v2: Full dependency management interface
+ * DepRadar dashboard v2: Full dependency management interface
  * http://127.0.0.1:24681
  */
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
@@ -17,7 +17,7 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 24681;
-const CACHE_PATH = join(homedir(), ".depup-cache.json");
+const CACHE_PATH = join(homedir(), ".depradar-cache.json");
 
 function readCache() {
   if (!existsSync(CACHE_PATH)) return null;

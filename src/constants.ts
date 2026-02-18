@@ -1,5 +1,5 @@
 export const SERVER_NAME = "DepRadar";
-export const SERVER_VERSION = "3.0.0";
+export const SERVER_VERSION = "4.0.0";
 
 export const CHARACTER_LIMIT = 25_000;
 export const COMMAND_TIMEOUT = 120_000;
@@ -153,5 +153,5 @@ export const LANGUAGE_MARKERS: Record<string, LanguageMarker> = {
 
 // ─── Cache ─────────────────────────────────────────────────────────────
 
-export const CACHE_FILENAME = ".depup-cache.json";
+export const CACHE_FILENAME = ".depradar-cache.json";
 export const CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000; // 6 hours

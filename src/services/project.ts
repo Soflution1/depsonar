@@ -33,8 +33,8 @@ const DEFAULT_PROJECTS_DIRS = [
 
 export function getProjectsDir(): string {
   const configPaths = [
-    join(homedir(), ".depuprc.json"),
-    join(homedir(), ".config", "depup", "config.json"),
+    join(homedir(), ".depradarrc.json"),
+    join(homedir(), ".config", "depradar", "config.json"),
   ];
 
   for (const configPath of configPaths) {
@@ -674,8 +674,8 @@ export function getCacheStatus(): { exists: boolean; age: string; projectCount: 
 
 export function loadConfig(): { projectsDir: string; ignoredPackages: string[] } {
   const configPaths = [
-    join(homedir(), ".depuprc.json"),
-    join(homedir(), ".config", "depup", "config.json"),
+    join(homedir(), ".depradarrc.json"),
+    join(homedir(), ".config", "depradar", "config.json"),
   ];
 
   for (const configPath of configPaths) {
@@ -693,7 +693,7 @@ export function loadConfig(): { projectsDir: string; ignoredPackages: string[] }
 }
 
 export function saveConfig(config: Record<string, unknown>): string {
-  const configPath = join(homedir(), ".depuprc.json");
+  const configPath = join(homedir(), ".depradarrc.json");
   const existing = existsSync(configPath)
     ? JSON.parse(readFileSync(configPath, "utf-8"))
     : {};

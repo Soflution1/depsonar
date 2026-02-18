@@ -24,6 +24,9 @@ import {
   DeprecatedSchema,
   SecretsSchema,
   LicensesSchema,
+  LiveCveSchema,
+  ChangelogSchema,
+  MigrateSchema,
 } from "../schemas/index.js";
 
 import { LANGUAGE_MARKERS } from "../constants.js";
@@ -62,6 +65,9 @@ import {
   formatDeprecated,
   formatSecrets,
   formatLicenses,
+  formatLiveCve,
+  formatChangelog,
+  formatMigration,
 } from "../services/formatter.js";
 
 import { checkAllRuntimes, checkProjectVersionFiles } from "../services/runtimes.js";
@@ -74,6 +80,9 @@ import { checkProjectCves, checkAllProjectCves, getCveDatabaseStats, getCveDatab
 import { checkDeprecated, checkAllDeprecated } from "../services/deprecated.js";
 import { scanProjectSecrets, scanAllProjectSecrets } from "../services/secrets.js";
 import { checkProjectLicenses, checkAllProjectLicenses } from "../services/licenses.js";
+import { liveAuditProject, liveAuditAllProjects } from "../services/osv.js";
+import { getProjectChangelog } from "../services/changelog.js";
+import { detectMigration, detectAllMigrations } from "../services/migrate.js";
 
 import type { Language } from "../types.js";
 
@@ -122,7 +131,7 @@ If no cache exists, suggests running depradar_scan or setting up the background 
 Examples:
   - "Any dependency alerts?"
   - "Do any of my projects need updates?"
-  - "Show depup alerts"`,
+  - "Show depradar alerts"`,
       inputSchema: AlertsSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
@@ -435,7 +444,7 @@ Examples:
       title: "Setup Background Checker",
       description: `Install or remove the background dependency checker. On macOS, uses launchd (native, lightweight). On Linux, uses cron.
 
-The checker runs on schedule, scans all projects, writes results to ~/.depup-cache.json, then exits. Zero RAM between runs, zero AI tokens, zero cost.
+The checker runs on schedule, scans all projects, writes results to ~/.depradar-cache.json, then exits. Zero RAM between runs, zero AI tokens, zero cost.
 
 Results are shown by depradar_alerts.
 
@@ -466,11 +475,11 @@ Examples:
   server.registerTool(
     "depradar_config",
     {
-      title: "Configure DepUp",
-      description: `View or update configuration. Saved to ~/.depuprc.json.
+      title: "Configure DepRadar",
+      description: `View or update configuration. Saved to ~/.depradarrc.json.
 
 Examples:
-  - "Show depup config"
+  - "Show depradar config"
   - "Set projects directory to ~/Code"`,
       inputSchema: ConfigSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -485,7 +494,7 @@ Examples:
             "# DepUp Configuration",
             "",
             `**Projects directory**: \`${config.projectsDir}\``,
-            `**Config file**: \`~/.depuprc.json\``,
+            `**Config file**: \`~/.depradarrc.json\``,
             "",
             "### Background Checker",
             cacheStatus.exists
@@ -964,6 +973,114 @@ Examples:
       }
     }
   );
+
+  // ─── depradar_live_cve ───────────────────────────────────────────────
+
+  server.registerTool(
+    "depradar_live_cve",
+    {
+      title: "Live CVE Scan (osv.dev)",
+      description: `Real-time vulnerability scan using the osv.dev API. Checks every installed package against the global OSV database (npm, PyPI, crates.io, Go, Packagist, RubyGems, Pub).
+
+Unlike depradar_audit (which uses local tools like npm audit), this queries the live osv.dev database for the most up-to-date vulnerability data. No API key needed.
+
+Examples:
+  - "Live CVE scan all my projects"
+  - "Check RoomPilot for vulnerabilities with osv.dev"
+  - "Real-time security scan"`,
+      inputSchema: LiveCveSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ project, directory }) => {
+      try {
+        if (project) {
+          const projectPath = resolveProject(project);
+          const info = getProjectInfo(projectPath);
+          if (!info) return error(`Cannot read project at ${projectPath}`);
+          const result = await liveAuditProject(projectPath, info.name, info.language);
+          return text(formatLiveCve(result.vulnerabilities.length > 0 ? [result] : []));
+        }
+
+        const projects = discoverProjects(directory);
+        if (projects.length === 0) return text("No projects found.");
+        const results = await liveAuditAllProjects(
+          projects.map(p => ({ name: p.name, path: p.path, language: p.language }))
+        );
+        return text(formatLiveCve(results));
+      } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // ─── depradar_changelog ──────────────────────────────────────────────
+
+  server.registerTool(
+    "depradar_changelog",
+    {
+      title: "Changelog & Breaking Changes",
+      description: `Check changelogs and breaking changes before updating. Shows major/minor/patch breakdown with changelog URLs and release notes for breaking updates.
+
+Run this BEFORE depradar_update to understand what will change.
+
+Examples:
+  - "Show changelog for RoomPilot before updating"
+  - "What breaking changes are pending in my project?"
+  - "Check what changed in latest versions"`,
+      inputSchema: ChangelogSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ project }) => {
+      try {
+        const projectPath = resolveProject(project);
+        const info = getProjectInfo(projectPath);
+        if (!info) return error(`Cannot read project at ${projectPath}`);
+        const result = getProjectChangelog(projectPath, info.name);
+        return text(formatChangelog(result));
+      } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // ─── depradar_migrate ────────────────────────────────────────────────
+
+  server.registerTool(
+    "depradar_migrate",
+    {
+      title: "Framework Migration Detector",
+      description: `Detect framework migration needs by scanning code for deprecated patterns. Currently supports: Svelte 4→5, Next.js 13→14→15.
+
+Finds exact file locations of code that needs to change, with migration instructions for each pattern.
+
+Examples:
+  - "Check if my projects need Svelte 5 migration"
+  - "Migration scan for all projects"
+  - "What Svelte 4 patterns are still in my code?"`,
+      inputSchema: MigrateSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ project, directory }) => {
+      try {
+        if (project) {
+          const projectPath = resolveProject(project);
+          const info = getProjectInfo(projectPath);
+          if (!info) return error(`Cannot read project at ${projectPath}`);
+          const result = detectMigration(projectPath, info.name, info.framework);
+          return text(formatMigration(result.migrationNeeded ? [result] : []));
+        }
+
+        const projects = discoverProjects(directory);
+        if (projects.length === 0) return text("No projects found.");
+        const results = detectAllMigrations(
+          projects.map(p => ({ name: p.name, path: p.path, framework: p.framework }))
+        );
+        return text(formatMigration(results));
+      } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
 }
 
 // ─── Scheduler Setup ───────────────────────────────────────────────────
@@ -979,7 +1096,7 @@ function getCheckerPath(): string {
 }
 
 function setupLaunchd(intervalHours: number, uninstall: boolean): string {
-  const plistName = "com.depup.checker";
+  const plistName = "com.depradar.checker";
   const plistPath = join(homedir(), "Library", "LaunchAgents", `${plistName}.plist`);
 
   if (uninstall) {
@@ -1013,7 +1130,7 @@ ${programArgs}
   <key>RunAtLoad</key>
   <true/>
   <key>StandardErrorPath</key>
-  <string>${join(homedir(), ".depup-checker.log")}</string>
+  <string>${join(homedir(), ".depradar-checker.log")}</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
@@ -1035,8 +1152,8 @@ ${programArgs}
     `**Schedule**: Every ${intervalHours} hour(s)`,
     `**Method**: macOS launchd (native, lightweight)`,
     `**Plist**: \`${plistPath}\``,
-    `**Log**: \`~/.depup-checker.log\``,
-    `**Cache**: \`~/.depup-cache.json\``,
+    `**Log**: \`~/.depradar-checker.log\``,
+    `**Cache**: \`~/.depradar-cache.json\``,
     "",
     "The checker will run immediately, then every " + intervalHours + "h.",
     "It scans your projects, writes the cache, and exits. Zero RAM between runs.",
@@ -1051,13 +1168,13 @@ function setupCron(intervalHours: number, uninstall: boolean): string {
 
   try {
     const currentCron = run("crontab -l", homedir()).split("\n");
-    const filtered = currentCron.filter((line) => !line.includes(marker) && !line.includes("depup"));
+    const filtered = currentCron.filter((line) => !line.includes(marker) && !line.includes("depradar"));
 
     if (uninstall) {
       const newCron = filtered.join("\n").trim() + "\n";
-      writeFileSync("/tmp/depup-crontab", newCron, "utf-8");
-      run("crontab /tmp/depup-crontab", homedir());
-      unlinkSync("/tmp/depup-crontab");
+      writeFileSync("/tmp/depradar-crontab", newCron, "utf-8");
+      run("crontab /tmp/depradar-crontab", homedir());
+      unlinkSync("/tmp/depradar-crontab");
       return "Background checker removed from crontab.";
     }
 
@@ -1066,25 +1183,25 @@ function setupCron(intervalHours: number, uninstall: boolean): string {
       ? `node ${checkerPath}`
       : "npx --yes DepRadar --check";
 
-    const cronLine = `0 */${intervalHours} * * * ${cmd} 2>> ~/.depup-checker.log ${marker}`;
+    const cronLine = `0 */${intervalHours} * * * ${cmd} 2>> ~/.depradar-checker.log ${marker}`;
     filtered.push(cronLine);
 
     const newCron = filtered.join("\n").trim() + "\n";
-    writeFileSync("/tmp/depup-crontab", newCron, "utf-8");
-    run("crontab /tmp/depup-crontab", homedir());
-    unlinkSync("/tmp/depup-crontab");
+    writeFileSync("/tmp/depradar-crontab", newCron, "utf-8");
+    run("crontab /tmp/depradar-crontab", homedir());
+    unlinkSync("/tmp/depradar-crontab");
 
     return [
       "# Background Checker Installed ✅",
       "",
       `**Schedule**: Every ${intervalHours} hour(s)`,
       `**Method**: crontab`,
-      `**Log**: \`~/.depup-checker.log\``,
-      `**Cache**: \`~/.depup-cache.json\``,
+      `**Log**: \`~/.depradar-checker.log\``,
+      `**Cache**: \`~/.depradar-cache.json\``,
       "",
       "Use `depradar_alerts` to see results.",
     ].join("\n");
   } catch {
-    return "Could not configure crontab. You can manually add this to your crontab:\n\n```\n0 */6 * * * npx --yes DepRadar --check 2>> ~/.depup-checker.log\n```";
+    return "Could not configure crontab. You can manually add this to your crontab:\n\n```\n0 */6 * * * npx --yes DepRadar --check 2>> ~/.depradar-checker.log\n```";
   }
 }
