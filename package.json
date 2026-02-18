@@ -37,7 +37,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "depup-mcp": "dist/index.js"
+    "depup-mcp": "dist/index.js",
+    "depup-dashboard": "dist/dashboard.js"
   },
   "files": [
     "dist",

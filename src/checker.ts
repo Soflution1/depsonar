@@ -79,7 +79,11 @@ export async function main() {
   console.error(`[depup] Cache written to ~/.depup-cache.json`);
 }
 
-main().catch((err) => {
-  console.error("[depup] Fatal:", err.message);
-  process.exit(1);
-});
+// Only run if called directly (not imported)
+const isDirectRun = process.argv[1]?.endsWith("checker.js") || process.argv.includes("--check");
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("[depup] Fatal:", err.message);
+    process.exit(1);
+  });
+}
