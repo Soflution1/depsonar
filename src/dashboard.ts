@@ -172,5 +172,5 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
 const server = createServer(handleRequest);
 server.listen(PORT, "127.0.0.1", () => {
-  console.error("[depup] Dashboard v2 running on http://127.0.0.1:" + PORT);
+  console.error("[DepRadar] Dashboard v2 running on http://127.0.0.1:" + PORT);
 });

@@ -14,10 +14,10 @@ if (args.includes("--check") || args.includes("-c")) {
   console.log(`${SERVER_NAME} v${SERVER_VERSION}
 
 Usage:
-  depup-mcp              Start MCP server (for Cursor/Claude)
-  depup-mcp --check      Run background scan (for cron/launchd)
-  depup-mcp --version    Show version
-  depup-mcp --help       Show this help
+  DepRadar              Start MCP server (for Cursor/Claude)
+  DepRadar --check      Run background scan (for cron/launchd)
+  DepRadar --version    Show version
+  DepRadar --help       Show this help
 
 MCP Tools:
   depup_alerts           Show pending alerts from background scans

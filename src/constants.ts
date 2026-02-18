@@ -1,4 +1,4 @@
-export const SERVER_NAME = "depup-mcp";
+export const SERVER_NAME = "DepRadar";
 export const SERVER_VERSION = "3.0.0";
 
 export const CHARACTER_LIMIT = 25_000;

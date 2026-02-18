@@ -1,5 +1,5 @@
 {
-  "name": "depup-mcp",
+  "name": "DepRadar",
   "version": "3.0.0",
   "description": "MCP server for complete dev infrastructure maintenance. Dependencies, CVEs, secrets, licenses, runtimes, Docker, GitHub Actions. 20 tools, 9 languages.",
   "keywords": [
@@ -26,19 +26,19 @@
   ],
   "author": "Soflution Ltd",
   "license": "MIT",
-  "homepage": "https://github.com/Soflution1/depup-mcp",
+  "homepage": "https://github.com/Soflution1/DepRadar",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Soflution1/depup-mcp.git"
+    "url": "https://github.com/Soflution1/DepRadar.git"
   },
   "bugs": {
-    "url": "https://github.com/Soflution1/depup-mcp/issues"
+    "url": "https://github.com/Soflution1/DepRadar/issues"
   },
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "depup-mcp": "dist/index.js",
-    "depup-dashboard": "dist/dashboard.js"
+    "DepRadar": "dist/index.js",
+    "depradar-dashboard": "dist/dashboard.js"
   },
   "files": [
     "dist",

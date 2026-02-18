@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="static/banner.png" alt="depup-mcp" width="900"/>
+  <img src="static/banner.png" alt="DepRadar" width="900"/>
 </p>
 <p align="center">
   <strong>Like WordPress auto-updates, but for all your dev projects.</strong><br>
@@ -12,11 +12,11 @@
   <img src="https://img.shields.io/badge/license-MIT-blue"/>
 </p>
 
-**depup-mcp** is an MCP server that keeps your projects' dependencies up to date, directly from Cursor, Claude, or any MCP-compatible AI assistant.
+**DepRadar** is an MCP server that keeps your projects' dependencies up to date, directly from Cursor, Claude, or any MCP-compatible AI assistant.
 
 Supports **Node.js**, **Python**, **Rust**, **Go**, **PHP**, **Ruby**, **Dart/Flutter**, **Swift**, and **Kotlin/Java**.
 
-With AI-generated "vibe coding" projects, dependency maintenance is an afterthought. WordPress solved this with one-click updates. **depup-mcp** brings the same experience to modern development.
+With AI-generated "vibe coding" projects, dependency maintenance is an afterthought. WordPress solved this with one-click updates. **DepRadar** brings the same experience to modern development.
 
 ---
 
@@ -44,7 +44,7 @@ Add to `~/.cursor/mcp.json`:
   "mcpServers": {
     "depup": {
       "command": "npx",
-      "args": ["-y", "depup-mcp"]
+      "args": ["-y", "DepRadar"]
     }
   }
 }
@@ -53,14 +53,14 @@ Add to `~/.cursor/mcp.json`:
 ### Option 2: Global install
 
 ```bash
-npm install -g depup-mcp
+npm install -g DepRadar
 ```
 
 ```json
 {
   "mcpServers": {
     "depup": {
-      "command": "depup-mcp"
+      "command": "DepRadar"
     }
   }
 }
@@ -69,8 +69,8 @@ npm install -g depup-mcp
 ### Option 3: Clone
 
 ```bash
-git clone https://github.com/Soflution1/depup-mcp.git
-cd depup-mcp
+git clone https://github.com/Soflution1/DepRadar.git
+cd DepRadar
 npm install && npm run build
 ```
 
@@ -79,7 +79,7 @@ npm install && npm run build
   "mcpServers": {
     "depup": {
       "command": "node",
-      "args": ["/path/to/depup-mcp/dist/index.js"]
+      "args": ["/path/to/DepRadar/dist/index.js"]
     }
   }
 }
@@ -100,7 +100,7 @@ The background checker scans your projects on a schedule and caches the results.
 3. Results are written to `~/.depup-cache.json`
 4. The process exits immediately (zero RAM between runs)
 5. No AI API calls (zero tokens)
-6. Next time you ask Cursor, `depup_alerts` reads the cache instantly
+6. Next time you ask Cursor, `depradar_alerts` reads the cache instantly
 
 **Setup from Cursor:**
 
@@ -110,12 +110,12 @@ Or manually:
 
 ```bash
 # macOS (launchd)
-depup-mcp --check    # run once manually
-# Then use depup_setup_checker tool from Cursor
+DepRadar --check    # run once manually
+# Then use depradar_setup_checker tool from Cursor
 
 # Linux (cron)
 # Add to crontab:
-0 */6 * * * npx --yes depup-mcp --check 2>> ~/.depup-checker.log
+0 */6 * * * npx --yes DepRadar --check 2>> ~/.depup-checker.log
 ```
 
 **Remove:**
@@ -152,7 +152,7 @@ Or via environment variable:
   "mcpServers": {
     "depup": {
       "command": "npx",
-      "args": ["-y", "depup-mcp"],
+      "args": ["-y", "DepRadar"],
       "env": {
         "DEPUP_PROJECTS_DIR": "/Users/me/my-projects"
       }
@@ -167,14 +167,14 @@ Or from Cursor: *"Set my projects directory to ~/Code"*
 
 ## Tools
 
-### `depup_alerts`
+### `depradar_alerts`
 Instant alerts from background scans (reads cache, no live scan).
 ```
 "Any dependency alerts?"
 "Do my projects need updates?"
 ```
 
-### `depup_scan`
+### `depradar_scan`
 Live scan of all projects with language/framework detection.
 ```
 "Scan all my projects"
@@ -182,14 +182,14 @@ Live scan of all projects with language/framework detection.
 "Show all SvelteKit projects"
 ```
 
-### `depup_check`
+### `depradar_check`
 Deep-dive into one project's outdated deps.
 ```
 "Check JobPin for outdated deps"
 "What needs updating in my Django app?"
 ```
 
-### `depup_update`
+### `depradar_update`
 Update a single project.
 ```
 "Update JobPin"                              → minor (safe)
@@ -204,7 +204,7 @@ Update a single project.
 | `level` | `minor` | `patch`, `minor`, `latest` |
 | `dry_run` | `false` | Preview mode |
 
-### `depup_update_all`
+### `depradar_update_all`
 Batch update all projects.
 ```
 "Update all my projects"                     → dry run by default
@@ -219,7 +219,7 @@ Batch update all projects.
 | `language` | all | Filter by language |
 | `dry_run` | `true` | Safe by default |
 
-### `depup_health`
+### `depradar_health`
 Health score 0-100 for a project.
 ```
 "How healthy is JobPin?"
@@ -228,21 +228,21 @@ Health score 0-100 for a project.
 
 Scoring: -3/outdated (max -40), -10/major behind, -15 missing lockfile, -5/vulnerability (max -30).
 
-### `depup_install`
+### `depradar_install`
 Fresh install with optional clean mode.
 ```
 "Install deps for JobPin"
 "Clean install my project"
 ```
 
-### `depup_setup_checker`
+### `depradar_setup_checker`
 Install/remove background scheduled scans.
 ```
 "Setup background checking every 6 hours"
 "Remove the background checker"
 ```
 
-### `depup_config`
+### `depradar_config`
 View or edit configuration.
 ```
 "Show depup config"
@@ -296,10 +296,10 @@ View or edit configuration.
 ## CLI Usage
 
 ```bash
-depup-mcp              # Start MCP server (for Cursor)
-depup-mcp --check      # Run background scan (for cron/launchd)
-depup-mcp --version    # Show version
-depup-mcp --help       # Show help
+DepRadar              # Start MCP server (for Cursor)
+DepRadar --check      # Run background scan (for cron/launchd)
+DepRadar --version    # Show version
+DepRadar --help       # Show help
 ```
 
 ---
@@ -307,7 +307,7 @@ depup-mcp --help       # Show help
 ## Architecture
 
 ```
-depup-mcp/
+DepRadar/
 ├── src/
 │   ├── index.ts              # Entry: MCP server or --check mode
 │   ├── checker.ts            # Background scanner (cron/launchd)
@@ -332,8 +332,8 @@ depup-mcp/
 ## Contributing
 
 ```bash
-git clone https://github.com/Soflution1/depup-mcp.git
-cd depup-mcp
+git clone https://github.com/Soflution1/DepRadar.git
+cd DepRadar
 npm install
 npm run dev    # watch mode
 ```

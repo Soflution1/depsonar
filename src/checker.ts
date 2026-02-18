@@ -30,11 +30,11 @@ export async function main() {
   const projects = discoverProjects();
 
   if (projects.length === 0) {
-    console.error("[depup] No projects found. Configure with ~/.depuprc.json");
+    console.error("[DepRadar] No projects found. Configure with ~/.depuprc.json");
     process.exit(0);
   }
 
-  console.error(`[depup] Scanning ${projects.length} projects...`);
+  console.error(`[DepRadar] Scanning ${projects.length} projects...`);
 
   const entries: CacheEntry[] = [];
 
@@ -81,7 +81,7 @@ export async function main() {
       (e) => autoList.includes(e.project) && e.outdatedCount > 0
     );
     if (toUpdate.length > 0) {
-      console.error(`[depup] Auto-updating ${toUpdate.length} project(s)...`);
+      console.error(`[DepRadar] Auto-updating ${toUpdate.length} project(s)...`);
       for (const entry of toUpdate) {
         const info = projects.find((p) => p.name === entry.project);
         if (!info) continue;
@@ -95,7 +95,7 @@ export async function main() {
         }
       }
       // Re-scan updated projects to refresh cache
-      console.error(`[depup] Re-scanning auto-updated projects...`);
+      console.error(`[DepRadar] Re-scanning auto-updated projects...`);
       for (const entry of toUpdate) {
         const info = projects.find((p) => p.name === entry.project);
         if (!info) continue;
@@ -123,16 +123,16 @@ export async function main() {
   const alerts = entries.filter((e) => e.outdatedCount > 0).length;
 
   console.error(
-    `[depup] Done in ${elapsed}s. ${entries.length} projects, ${alerts} need attention.`
+    `[DepRadar] Done in ${elapsed}s. ${entries.length} projects, ${alerts} need attention.`
   );
-  console.error(`[depup] Cache written to ~/.depup-cache.json`);
+  console.error(`[DepRadar] Cache written to ~/.depup-cache.json`);
 }
 
 // Only run if called directly (not imported)
 const isDirectRun = process.argv[1]?.endsWith("checker.js") || process.argv.includes("--check");
 if (isDirectRun) {
   main().catch((err) => {
-    console.error("[depup] Fatal:", err.message);
+    console.error("[DepRadar] Fatal:", err.message);
     process.exit(1);
   });
 }

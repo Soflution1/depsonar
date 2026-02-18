@@ -103,21 +103,21 @@ function resolveProject(project: string): string {
   if (existsSync(fromDir)) return fromDir;
 
   throw new Error(
-    `Project "${project}" not found.\nUse depup_scan to list available projects.`
+    `Project "${project}" not found.\nUse depradar_scan to list available projects.`
   );
 }
 
 export function registerTools(server: McpServer) {
 
-  // ─── depup_alerts ─────────────────────────────────────────────────
+  // ─── depradar_alerts ─────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_alerts",
+    "depradar_alerts",
     {
       title: "Check Alerts",
       description: `Show pending dependency alerts from the last background scan. This reads the cache file written by the background checker (no live scan, instant response).
 
-If no cache exists, suggests running depup_scan or setting up the background checker.
+If no cache exists, suggests running depradar_scan or setting up the background checker.
 
 Examples:
   - "Any dependency alerts?"
@@ -135,8 +135,8 @@ Examples:
             "# No Recent Scan Data",
             "",
             "No background scan results found. You can:",
-            "- Run `depup_scan` to scan now",
-            "- Run `depup_setup_checker` to set up automatic background scans",
+            "- Run `depradar_scan` to scan now",
+            "- Run `depradar_setup_checker` to set up automatic background scans",
             "",
             status.exists ? `Last scan was too old to use.` : "No scan has been run yet.",
           ].join("\n")
@@ -147,10 +147,10 @@ Examples:
     }
   );
 
-  // ─── depup_check ──────────────────────────────────────────────────
+  // ─── depradar_check ──────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_check",
+    "depradar_check",
     {
       title: "Check Outdated Dependencies",
       description: `Check a project for outdated dependencies. Supports Node.js, Python, Rust, Go, PHP, Ruby, and Dart/Flutter.
@@ -190,10 +190,10 @@ Examples:
     }
   );
 
-  // ─── depup_update ─────────────────────────────────────────────────
+  // ─── depradar_update ─────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_update",
+    "depradar_update",
     {
       title: "Update Dependencies",
       description: `Update dependencies for a project. Works with any supported language.
@@ -240,10 +240,10 @@ Examples:
     }
   );
 
-  // ─── depup_scan ───────────────────────────────────────────────────
+  // ─── depradar_scan ───────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_scan",
+    "depradar_scan",
     {
       title: "Scan All Projects",
       description: `Scan all projects in your workspace. Auto-detects language (Node, Python, Rust, Go, PHP, Ruby, Dart) and framework.
@@ -261,7 +261,7 @@ Examples:
       try {
         let projects = discoverProjects(directory);
         if (projects.length === 0) {
-          return text(`No projects found in \`${directory || getProjectsDir()}\`.\n\nUse \`depup_config\` to set your projects directory.`);
+          return text(`No projects found in \`${directory || getProjectsDir()}\`.\n\nUse \`depradar_config\` to set your projects directory.`);
         }
 
         if (framework) {
@@ -293,10 +293,10 @@ Examples:
     }
   );
 
-  // ─── depup_update_all ─────────────────────────────────────────────
+  // ─── depradar_update_all ─────────────────────────────────────────────
 
   server.registerTool(
-    "depup_update_all",
+    "depradar_update_all",
     {
       title: "Update All Projects",
       description: `Batch update across all projects. Defaults to dry_run=true (safe preview).
@@ -314,7 +314,7 @@ Examples:
       try {
         let projects = discoverProjects(directory);
         if (projects.length === 0) {
-          return text("No projects found. Use `depup_config` to set your directory.");
+          return text("No projects found. Use `depradar_config` to set your directory.");
         }
 
         if (framework) projects = projects.filter((p) => p.framework.toLowerCase() === framework.toLowerCase());
@@ -362,10 +362,10 @@ Examples:
     }
   );
 
-  // ─── depup_health ─────────────────────────────────────────────────
+  // ─── depradar_health ─────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_health",
+    "depradar_health",
     {
       title: "Health Report",
       description: `Score a project from 0-100. Checks outdated deps, security issues, lockfile.
@@ -388,10 +388,10 @@ Examples:
     }
   );
 
-  // ─── depup_install ────────────────────────────────────────────────
+  // ─── depradar_install ────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_install",
+    "depradar_install",
     {
       title: "Install Dependencies",
       description: `Fresh install. Use clean=true to nuke node_modules/vendor first.
@@ -427,17 +427,17 @@ Examples:
     }
   );
 
-  // ─── depup_setup_checker ──────────────────────────────────────────
+  // ─── depradar_setup_checker ──────────────────────────────────────────
 
   server.registerTool(
-    "depup_setup_checker",
+    "depradar_setup_checker",
     {
       title: "Setup Background Checker",
       description: `Install or remove the background dependency checker. On macOS, uses launchd (native, lightweight). On Linux, uses cron.
 
 The checker runs on schedule, scans all projects, writes results to ~/.depup-cache.json, then exits. Zero RAM between runs, zero AI tokens, zero cost.
 
-Results are shown by depup_alerts.
+Results are shown by depradar_alerts.
 
 Examples:
   - "Setup background dependency checking"
@@ -461,10 +461,10 @@ Examples:
     }
   );
 
-  // ─── depup_config ─────────────────────────────────────────────────
+  // ─── depradar_config ─────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_config",
+    "depradar_config",
     {
       title: "Configure DepUp",
       description: `View or update configuration. Saved to ~/.depuprc.json.
@@ -492,7 +492,7 @@ Examples:
               ? `- Last scan: ${cacheStatus.age}`
               + `\n- Projects tracked: ${cacheStatus.projectCount}`
               + `\n- Alerts: ${cacheStatus.alerts}`
-              : "- Not configured. Use `depup_setup_checker` to enable.",
+              : "- Not configured. Use `depradar_setup_checker` to enable.",
             "",
             "### Supported Languages",
             ...Object.entries(LANGUAGE_MARKERS).map(([key, m]) => `- ${m.name} (${m.files.join(", ")})`),
@@ -507,10 +507,10 @@ Examples:
     }
   );
 
-  // ─── depup_audit ──────────────────────────────────────────────────
+  // ─── depradar_audit ──────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_audit",
+    "depradar_audit",
     {
       title: "Security Audit",
       description: `Scan projects for known security vulnerabilities (CVEs). Uses npm audit, cargo audit, pip-audit, composer audit, govulncheck.
@@ -544,10 +544,10 @@ Examples:
     }
   );
 
-  // ─── depup_runtimes ───────────────────────────────────────────────
+  // ─── depradar_runtimes ───────────────────────────────────────────────
 
   server.registerTool(
-    "depup_runtimes",
+    "depradar_runtimes",
     {
       title: "Check Runtime Versions",
       description: `Check installed runtime versions (Node.js, Python, Rust, Go, PHP, Ruby, Dart, Swift). Detects EOL and outdated versions. Also checks project version files (.nvmrc, .python-version, rust-toolchain.toml, engines.node).
@@ -579,10 +579,10 @@ Examples:
     }
   );
 
-  // ─── depup_toolchain ──────────────────────────────────────────────
+  // ─── depradar_toolchain ──────────────────────────────────────────────
 
   server.registerTool(
-    "depup_toolchain",
+    "depradar_toolchain",
     {
       title: "Check Global Toolchain",
       description: `Check versions of globally installed tools: npm, pnpm, yarn, bun, composer, cargo, pip, typescript, git, docker, homebrew, vercel-cli, supabase-cli, wrangler.
@@ -609,10 +609,10 @@ Examples:
     }
   );
 
-  // ─── depup_docker ─────────────────────────────────────────────────
+  // ─── depradar_docker ─────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_docker",
+    "depradar_docker",
     {
       title: "Docker Image Audit",
       description: `Scan Dockerfile and docker-compose files for outdated or EOL base images. Checks: node, python, ruby, php, golang, rust, nginx, postgres, redis, ubuntu, alpine.
@@ -642,10 +642,10 @@ Examples:
     }
   );
 
-  // ─── depup_actions ────────────────────────────────────────────────
+  // ─── depradar_actions ────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_actions",
+    "depradar_actions",
     {
       title: "GitHub Actions Audit",
       description: `Scan GitHub Actions workflow files for outdated or deprecated actions. Knows 30+ popular actions (actions/checkout, docker/build-push-action, cloudflare/wrangler-action, etc.).
@@ -675,10 +675,10 @@ Examples:
     }
   );
 
-  // ─── depup_envcheck ───────────────────────────────────────────────
+  // ─── depradar_envcheck ───────────────────────────────────────────────
 
   server.registerTool(
-    "depup_envcheck",
+    "depradar_envcheck",
     {
       title: "Environment & Config Check",
       description: `Validate project environments: .env/.env.example sync, lockfile freshness, tsconfig best practices, Svelte config (detects deprecated svelte-preprocess with Svelte 5, duplicate adapters, etc.), multiple lockfiles.
@@ -709,10 +709,10 @@ Examples:
     }
   );
 
-  // ─── depup_infra ──────────────────────────────────────────────────
+  // ─── depradar_infra ──────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_infra",
+    "depradar_infra",
     {
       title: "Full Infrastructure Report",
       description: `Complete infrastructure health check in one command. Combines: runtime versions, global toolchain, security audit, CVE advisories, Docker images, GitHub Actions, environment configs, secret scanning, license compliance, deprecated packages, and optionally dependency scan.
@@ -806,10 +806,10 @@ Examples:
     }
   );
 
-  // ─── depup_cve ────────────────────────────────────────────────────
+  // ─── depradar_cve ────────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_cve",
+    "depradar_cve",
     {
       title: "CVE Advisory Check",
       description: `Check projects against known framework CVEs (Svelte, SvelteKit, devalue, Next.js, Vite, Express, Axios). Goes beyond npm audit by checking a curated database of framework-specific vulnerabilities.
@@ -856,10 +856,10 @@ Examples:
     }
   );
 
-  // ─── depup_deprecated ─────────────────────────────────────────────
+  // ─── depradar_deprecated ─────────────────────────────────────────────
 
   server.registerTool(
-    "depup_deprecated",
+    "depradar_deprecated",
     {
       title: "Deprecated Package Check",
       description: `Detect deprecated, unmaintained, or replaced packages. Checks both npm deprecated flags and a curated list of known replacements (moment→dayjs, node-fetch→native fetch, request→undici, etc.).
@@ -891,10 +891,10 @@ Examples:
     }
   );
 
-  // ─── depup_secrets ────────────────────────────────────────────────
+  // ─── depradar_secrets ────────────────────────────────────────────────
 
   server.registerTool(
-    "depup_secrets",
+    "depradar_secrets",
     {
       title: "Secret Scanner",
       description: `Scan project files for exposed secrets, API keys, tokens, and credentials. Detects: AWS keys, GitHub tokens, Stripe keys, Supabase JWT, OpenAI/Anthropic keys, private keys, database URLs, generic API key patterns.
@@ -928,10 +928,10 @@ Examples:
     }
   );
 
-  // ─── depup_licenses ───────────────────────────────────────────────
+  // ─── depradar_licenses ───────────────────────────────────────────────
 
   server.registerTool(
-    "depup_licenses",
+    "depradar_licenses",
     {
       title: "License Compliance Check",
       description: `Check dependency licenses for commercial/SaaS compatibility. Flags: GPL/AGPL (copyleft, requires source disclosure), non-commercial (CC-BY-NC), unknown licenses.
@@ -996,7 +996,7 @@ function setupLaunchd(intervalHours: number, uninstall: boolean): string {
   // Use npx as fallback if checker.js path not found
   const programArgs = checkerPath
     ? `    <string>node</string>\n    <string>${checkerPath}</string>`
-    : `    <string>npx</string>\n    <string>depup-mcp</string>\n    <string>--check</string>`;
+    : `    <string>npx</string>\n    <string>DepRadar</string>\n    <string>--check</string>`;
 
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1041,13 +1041,13 @@ ${programArgs}
     "The checker will run immediately, then every " + intervalHours + "h.",
     "It scans your projects, writes the cache, and exits. Zero RAM between runs.",
     "",
-    "Use `depup_alerts` to see results.",
-    "Use `depup_setup_checker` with `uninstall: true` to remove.",
+    "Use `depradar_alerts` to see results.",
+    "Use `depradar_setup_checker` with `uninstall: true` to remove.",
   ].join("\n");
 }
 
 function setupCron(intervalHours: number, uninstall: boolean): string {
-  const marker = "# depup-mcp background checker";
+  const marker = "# DepRadar background checker";
 
   try {
     const currentCron = run("crontab -l", homedir()).split("\n");
@@ -1064,7 +1064,7 @@ function setupCron(intervalHours: number, uninstall: boolean): string {
     const checkerPath = getCheckerPath();
     const cmd = checkerPath
       ? `node ${checkerPath}`
-      : "npx --yes depup-mcp --check";
+      : "npx --yes DepRadar --check";
 
     const cronLine = `0 */${intervalHours} * * * ${cmd} 2>> ~/.depup-checker.log ${marker}`;
     filtered.push(cronLine);
@@ -1082,9 +1082,9 @@ function setupCron(intervalHours: number, uninstall: boolean): string {
       `**Log**: \`~/.depup-checker.log\``,
       `**Cache**: \`~/.depup-cache.json\``,
       "",
-      "Use `depup_alerts` to see results.",
+      "Use `depradar_alerts` to see results.",
     ].join("\n");
   } catch {
-    return "Could not configure crontab. You can manually add this to your crontab:\n\n```\n0 */6 * * * npx --yes depup-mcp --check 2>> ~/.depup-checker.log\n```";
+    return "Could not configure crontab. You can manually add this to your crontab:\n\n```\n0 */6 * * * npx --yes DepRadar --check 2>> ~/.depup-checker.log\n```";
   }
 }
