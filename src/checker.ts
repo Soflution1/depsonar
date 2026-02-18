@@ -19,6 +19,9 @@ import {
   getSecurityIssues,
   writeCache,
   getFrameworkVersion,
+  loadConfig,
+  buildUpdateCommand,
+  run,
 } from "./services/project.js";
 import type { CacheEntry } from "./types.js";
 
@@ -69,6 +72,52 @@ export async function main() {
   }
 
   writeCache(entries);
+
+  // ── Auto-update enabled projects (safe = minor only) ──
+  const config = loadConfig() as any;
+  const autoList: string[] = config.autoUpdate || [];
+  if (autoList.length > 0) {
+    const toUpdate = entries.filter(
+      (e) => autoList.includes(e.project) && e.outdatedCount > 0
+    );
+    if (toUpdate.length > 0) {
+      console.error(`[depup] Auto-updating ${toUpdate.length} project(s)...`);
+      for (const entry of toUpdate) {
+        const info = projects.find((p) => p.name === entry.project);
+        if (!info) continue;
+        try {
+          const cmd = buildUpdateCommand(info, undefined, "minor");
+          console.error(`  ${entry.project}: $ ${cmd}`);
+          run(cmd, info.path);
+          console.error(`  ${entry.project}: ✅ updated`);
+        } catch (err: any) {
+          console.error(`  ${entry.project}: ❌ ${err.message}`);
+        }
+      }
+      // Re-scan updated projects to refresh cache
+      console.error(`[depup] Re-scanning auto-updated projects...`);
+      for (const entry of toUpdate) {
+        const info = projects.find((p) => p.name === entry.project);
+        if (!info) continue;
+        try {
+          const outdated = getOutdated(info.path, info);
+          const outdatedCount = Object.keys(outdated).length;
+          const majorCount = Object.entries(outdated).filter(([, pkg]) =>
+            isMajorUpdate(pkg.current, pkg.latest)
+          ).length;
+          let score = 100;
+          score -= Math.min(outdatedCount * 3, 40);
+          score -= majorCount * 10;
+          score = Math.max(0, Math.min(100, score));
+          const idx = entries.findIndex((e) => e.project === entry.project);
+          if (idx >= 0) {
+            entries[idx] = { ...entries[idx], outdatedCount, majorCount, score, checkedAt: new Date().toISOString() };
+          }
+        } catch { /* ignore */ }
+      }
+      writeCache(entries);
+    }
+  }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   const alerts = entries.filter((e) => e.outdatedCount > 0).length;

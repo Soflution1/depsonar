@@ -12,7 +12,7 @@ import { main as runChecker } from "./checker.js";
 import {
   discoverProjects, getOutdated, isMajorUpdate,
   groupByEcosystem, buildUpdateCommand, getSecurityIssues,
-  computeHealthReport, run,
+  computeHealthReport, run, loadConfig, saveConfig,
 } from "./services/project.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -141,6 +141,28 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     } catch (err: any) {
       return jsonRes(res, { command: cmd, error: err.message, success: false });
     }
+  }
+
+  // API: Get auto-update config
+  if (url === "/api/autoupdate" && req.method === "GET") {
+    const config = loadConfig() as any;
+    return jsonRes(res, { autoUpdate: config.autoUpdate || [] });
+  }
+
+  // API: Toggle auto-update for a project
+  if (url === "/api/autoupdate" && req.method === "POST") {
+    const body = JSON.parse(await readBody(req));
+    const { project, enabled } = body;
+    const config = loadConfig() as any;
+    const list: string[] = config.autoUpdate || [];
+    if (enabled && !list.includes(project)) {
+      list.push(project);
+    } else if (!enabled) {
+      const idx = list.indexOf(project);
+      if (idx >= 0) list.splice(idx, 1);
+    }
+    saveConfig({ autoUpdate: list });
+    return jsonRes(res, { autoUpdate: list });
   }
 
   // Serve HTML
