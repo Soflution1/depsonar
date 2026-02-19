@@ -27,6 +27,8 @@ import {
   LiveCveSchema,
   ChangelogSchema,
   MigrateSchema,
+  DocsSchema,
+  SearchPackageSchema,
 } from "../schemas/index.js";
 
 import { LANGUAGE_MARKERS } from "../constants.js";
@@ -83,6 +85,7 @@ import { checkProjectLicenses, checkAllProjectLicenses } from "../services/licen
 import { liveAuditProject, liveAuditAllProjects } from "../services/osv.js";
 import { getProjectChangelog } from "../services/changelog.js";
 import { detectMigration, detectAllMigrations } from "../services/migrate.js";
+import { fetchLibraryDocs, searchPackage } from "../services/docs.js";
 
 import type { Language } from "../types.js";
 
@@ -1076,6 +1079,113 @@ Examples:
           projects.map(p => ({ name: p.name, path: p.path, framework: p.framework }))
         );
         return text(formatMigration(results));
+      } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // ─── depsonar_docs ──────────────────────────────────────────────────
+
+  server.registerTool(
+    "depsonar_docs",
+    {
+      title: "Library Documentation (Context)",
+      description: `Fetch up-to-date documentation, changelogs, and migration guides for any npm package directly from source (GitHub + npm registry).
+
+Use this BEFORE writing code that depends on a library, to get the latest API docs and avoid hallucinating outdated APIs.
+
+Sections available:
+- **readme**: Latest README with API docs, examples, setup instructions
+- **changelog**: Recent release notes (last 5 versions) with breaking changes
+- **migration**: Migration/upgrade guides (supports Svelte, Next.js, Tailwind, Vite, Stripe, Supabase, Better Auth, etc.)
+
+Combine with a query to focus on a specific topic (e.g. query="runes" for Svelte 5 migration docs).
+
+Examples:
+  - "Get Svelte 5 docs focused on runes migration"
+  - "Show me the Supabase JS changelog"
+  - "What changed in Tailwind CSS v4?"
+  - "Get Better Auth setup docs"`,
+      inputSchema: DocsSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ package: pkg, query, sections }) => {
+      try {
+        const opts = {
+          readme: !sections || sections === "all" || sections === "readme",
+          changelog: !sections || sections === "all" || sections === "changelog",
+          migration: !sections || sections === "all" || sections === "migration",
+        };
+        const result = await fetchLibraryDocs(pkg, query, opts);
+
+        const parts: string[] = [];
+        parts.push(`# 📚 ${result.package}@${result.version || "unknown"}`);
+        if (result.description) parts.push(`> ${result.description}`);
+        if (result.homepage) parts.push(`🔗 Homepage: ${result.homepage}`);
+        if (result.repository) parts.push(`📦 Repository: ${result.repository}`);
+        parts.push("");
+
+        if (result.readme) {
+          parts.push("---");
+          parts.push("## README");
+          parts.push(result.readme);
+          parts.push("");
+        }
+
+        if (result.changelog) {
+          parts.push("---");
+          parts.push("## CHANGELOG (recent versions)");
+          parts.push(result.changelog);
+          parts.push("");
+        }
+
+        if (result.migrationGuide) {
+          parts.push("---");
+          parts.push("## MIGRATION GUIDE");
+          parts.push(result.migrationGuide);
+          parts.push("");
+        }
+
+        if (!result.readme && !result.changelog && !result.migrationGuide) {
+          parts.push("No documentation found. The package may not be on npm or may not have a GitHub repository.");
+        }
+
+        return text(parts.join("\n"));
+      } catch (err) {
+        return error(err instanceof Error ? err.message : String(err));
+      }
+    }
+  );
+
+  // ─── depsonar_search_package ────────────────────────────────────────
+
+  server.registerTool(
+    "depsonar_search_package",
+    {
+      title: "Search npm Packages",
+      description: `Search the npm registry for packages by name or keyword. Returns matching packages with name, latest version, and description.
+
+Use this to find the right package name before calling depsonar_docs.
+
+Examples:
+  - "Search for Svelte authentication libraries"
+  - "Find Stripe payment packages"
+  - "What Tailwind utility packages exist?"`,
+      inputSchema: SearchPackageSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ query }) => {
+      try {
+        const results = await searchPackage(query);
+        if (!results.length) return text(`No packages found for "${query}".`);
+
+        const lines = [`# 🔍 npm search: "${query}"\n`];
+        for (const r of results) {
+          lines.push(`- **${r.name}** \`${r.version}\` — ${r.description}`);
+        }
+        lines.push("\n> Use `depsonar_docs` with the package name to get full documentation.");
+        return text(lines.join("\n"));
       } catch (err) {
         return error(err instanceof Error ? err.message : String(err));
       }

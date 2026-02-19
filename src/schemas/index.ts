@@ -127,3 +127,16 @@ export const MigrateSchema = {
   project: z.string().optional().describe("Check a specific project. Leave empty to check all."),
   directory: z.string().optional().describe("Root directory to scan."),
 };
+
+
+// ─── v4.1 Context/Docs Schemas ─────────────────────────────────────────
+
+export const DocsSchema = {
+  package: z.string().describe("Package name to fetch docs for (e.g. 'svelte', '@supabase/supabase-js', 'tailwindcss')."),
+  query: z.string().optional().describe("Optional: specific question or topic to focus docs on (e.g. 'runes migration', 'auth setup', 'streaming')."),
+  sections: z.enum(["all", "readme", "changelog", "migration"]).optional().describe("Which sections to fetch: 'all' (default), 'readme', 'changelog', or 'migration'."),
+};
+
+export const SearchPackageSchema = {
+  query: z.string().describe("Search query to find packages (e.g. 'svelte auth', 'stripe payment', 'tailwind merge')."),
+};
